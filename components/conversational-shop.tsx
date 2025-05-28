@@ -24,7 +24,9 @@ import {
   Trash2,
 } from "lucide-react"
 import { searchProducts, uploadImageSearch } from "@/lib/product-search"
-import type { Product, Order } from "@/lib/types"
+import { removeItemsFromCart, addItemsToCart, generateModificationResponse } from "@/lib/cart-utils"
+import { convertFoodOrderToProducts } from "@/lib/food-ordering"
+import type { Product, Order, Conversation, Message } from "@/lib/types"
 import ProductCard from "@/components/product-card"
 import ProductDetail from "@/components/product-detail"
 import Pagination from "@/components/pagination"
@@ -45,23 +47,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { SignedIn, UserButton, useUser } from "@clerk/nextjs"
+import { handleFoodOrder } from "@/handlers/food-handler"
+import { handleProductSearch } from "@/handlers/product-handler"
 
-type Message = {
-  id: string
-  role: "user" | "assistant"
-  content: string
-  products?: Product[]
-  isLoading?: boolean
-}
 
-type Conversation = {
-  id: string
-  title: string
-  messages: Message[]
-  lastUpdated: number
-  preview: string
-  cart?: Product[]
-}
 
 const PRODUCTS_PER_PAGE = 8
 
@@ -79,6 +69,8 @@ export default function ConversationalShop() {
   const [notificationCount, setNotificationCount] = useState(2)
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [selectedProducts, setSelectedProducts] = useState<Product[]>([])
+  const [currentProductIndex, setCurrentProductIndex] = useState(0)
   const [showProductDetail, setShowProductDetail] = useState(false)
   const [orders, setOrders] = useState<Order[]>([])
   const [showOrders, setShowOrders] = useState(false)
@@ -87,6 +79,10 @@ export default function ConversationalShop() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
+
+  const {user} = useUser()
+
+  console.log( 'the user is ', user)
 
   // Load conversations and orders from localStorage on initial render
   useEffect(() => {
@@ -167,7 +163,8 @@ export default function ConversationalShop() {
       id: "welcome",
       role: "assistant",
       content:
-        "Hi there! How can I help you shop today? You can ask for products, order food, upload an image of something similar, or browse categories.",
+        "Hi there! How can I help you today? You can:\n• Order food (e.g., 'I want 2 plates of rice with chicken')\n• Search for products\n• Upload an image to find similar items\n• Browse categories",
+      messageType: "general",
     }
 
     const newConversation: Conversation = {
@@ -177,6 +174,7 @@ export default function ConversationalShop() {
       lastUpdated: Date.now(),
       preview: welcomeMessage.content,
       cart: [],
+      conversationHistory: [],
     }
 
     setConversations((prev) => [...prev, newConversation])
@@ -191,6 +189,13 @@ export default function ConversationalShop() {
         if (conv.id === conversationId) {
           // Get the last non-loading message for the preview
           const lastMessage = [...updatedMessages].reverse().find((msg) => !msg.isLoading)
+
+          // Update conversation history for food ordering context
+          const conversationHistory = updatedMessages
+            .filter((msg) => !msg.isLoading)
+            .map((msg) => `${msg.role}: ${msg.content}`)
+            .slice(-10) // Keep last 10 messages for context
+
           return {
             ...conv,
             messages: updatedMessages,
@@ -198,6 +203,7 @@ export default function ConversationalShop() {
             preview: lastMessage?.content || conv.preview,
             title: generateConversationTitle(updatedMessages),
             cart: updatedCart,
+            conversationHistory,
           }
         }
         return conv
@@ -242,8 +248,193 @@ export default function ConversationalShop() {
     }
   }
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const getCurrentConversationHistory = (): string[] => {
+    const conversation = conversations.find((conv) => conv.id === activeConversation)
+    return conversation?.conversationHistory || []
+  }
+
+  // const handleSendMessage = async (e: React.FormEvent) => {
+  //   e.preventDefault()
+  //   if (!input.trim() && !showImageUpload) return
+
+  //   const userMessage: Message = {
+  //     id: Date.now().toString(),
+  //     role: "user",
+  //     content: input,
+  //   }
+
+  //   const assistantMessage: Message = {
+  //     id: (Date.now() + 1).toString(),
+  //     role: "assistant",
+  //     content: "",
+  //     isLoading: true,
+  //   }
+
+  //   setMessages((prev) => [...prev, userMessage, assistantMessage])
+  //   setInput("")
+  //   setIsProcessing(true)
+
+  //   try {
+  //     // First, check if this is a food order or modification
+  //     const conversationHistory = getCurrentConversationHistory()
+
+  //     // 
+  //     const foodOrderResponse = await fetch("/api/food-order", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         query: input,
+  //         conversationHistory,
+  //         currentCart: cart,
+  //       }),
+  //     })
+
+  //     const foodOrderData = await foodOrderResponse.json()
+
+  //     if (foodOrderData.isModification) {
+  //       // Handle order modification
+  //       const { action, items } = foodOrderData
+  //       let success = false
+  //       let details = ""
+
+  //       if (action === "remove") {
+  //         // Remove items from cart
+  //         let updatedCart = [...cart]
+  //         let totalRemoved = 0
+
+  //         items.forEach((item: any) => {
+  //           const { newCart, removedCount } = removeItemsFromCart(updatedCart, item.name, item.quantity)
+  //           updatedCart = newCart
+  //           totalRemoved += removedCount
+  //         })
+
+  //         if (totalRemoved > 0) {
+  //           setCart(updatedCart)
+  //           success = true
+
+  //           toast({
+  //             title: "Items Removed",
+  //             description: `Removed ${totalRemoved} item(s) from your cart.`,
+  //             variant: "success",
+  //           })
+  //         } else {
+  //           details = "those items are not in your cart"
+  //         }
+  //       } else if (action === "add") {
+  //         // Add items to cart
+  //         const foodProducts = convertFoodOrderToProducts({
+  //           items,
+  //           isComplete: true,
+  //           needsConfirmation: false,
+  //           totalEstimatedPrice: items.reduce((sum: number, item: any) => sum + item.basePrice * item.quantity, 0),
+  //           orderSummary: items.map((item: any) => `${item.quantity} ${item.name}`).join(", "),
+  //         })
+
+  //         const updatedCart = addItemsToCart(cart, foodProducts)
+  //         setCart(updatedCart)
+  //         success = true
+
+  //         toast({
+  //           title: "Items Added",
+  //           description: `Added ${foodProducts.length} item(s) to your cart.`,
+  //           variant: "success",
+  //         })
+  //       }
+
+  //       const response = await generateModificationResponse(action, items, success, details)
+
+  //       setMessages((prev) =>
+  //         prev.map((msg) =>
+  //           msg.id === assistantMessage.id
+  //             ? {
+  //                 ...msg,
+  //                 content: response,
+  //                 messageType: "food_order" as const,
+  //                 isLoading: false,
+  //               }
+  //             : msg,
+  //         ),
+  //       )
+  //     } else if (foodOrderData.isFoodOrder && foodOrderData.success) {
+  //       // Handle regular food order
+  //       const { parsedOrder, aiResponse } = foodOrderData
+
+  //       // If order is complete, add to cart
+  //       let addedToCart = false
+  //       if (parsedOrder.isComplete && parsedOrder.items.length > 0) {
+  //         const foodProducts = convertFoodOrderToProducts(parsedOrder)
+  //         const updatedCart = addItemsToCart(cart, foodProducts)
+  //         setCart(updatedCart)
+  //         addedToCart = true
+
+  //         toast({
+  //           title: "Food Order Added to Cart",
+  //           description: `${foodProducts.length} item(s) added to your cart. Total: $${parsedOrder.totalEstimatedPrice.toFixed(2)}`,
+  //           variant: "success",
+  //         })
+  //       }
+
+  //       // Update the assistant message
+  //       setMessages((prev) =>
+  //         prev.map((msg) =>
+  //           msg.id === assistantMessage.id
+  //             ? {
+  //                 ...msg,
+  //                 content: addedToCart
+  //                   ? `${aiResponse}\n\nGreat! I've added your order to the cart so you can continue shopping.`
+  //                   : aiResponse,
+  //                 messageType: "food_order" as const,
+  //                 foodOrderData: parsedOrder,
+  //                 isLoading: false,
+  //               }
+  //             : msg,
+  //         ),
+  //       )
+  //     } else {
+  //       // Handle regular product search
+  //       const {products: results, aiResponse} = await searchProducts(input)
+       
+      
+
+  //       // Update the assistant message with the results and AI response
+  //       setMessages((prev) =>
+  //         prev.map((msg) =>
+  //           msg.id === assistantMessage.id
+  //             ? {
+  //                 ...msg,
+  //                 content: aiResponse || generateResponse(input, results),
+  //                 products : results,
+  //                 messageType: "product_search" as const,
+  //                 isLoading: false,
+  //               }
+  //             : msg,
+  //         ),
+  //       )
+  //     }
+  //   } catch (error) {
+  //     setMessages((prev) =>
+  //       prev.map((msg) =>
+  //         msg.id === assistantMessage.id
+  //           ? {
+  //               ...msg,
+  //               content: "I'm sorry, I couldn't process your request. Please try again.",
+  //               messageType: "general" as const,
+  //               isLoading: false,
+  //             }
+  //           : msg,
+  //       ),
+  //     )
+  //   } finally {
+  //     setIsProcessing(false)
+  //     // Ensure we scroll to bottom after processing
+  //     scrollToBottom()
+  //   }
+  // }
+
+  const handleSendMessage = async(e : React.FormEvent) => {
+      e.preventDefault()
     if (!input.trim() && !showImageUpload) return
 
     const userMessage: Message = {
@@ -262,51 +453,62 @@ export default function ConversationalShop() {
     setMessages((prev) => [...prev, userMessage, assistantMessage])
     setInput("")
     setIsProcessing(true)
+  const conversationHistory = getCurrentConversationHistory()
 
-    try {
-      // Call our API to search products
-      const results = await searchProducts(input)
-      const response = await fetch("/api/search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query: input }),
+  // we check the intent to route to the right handler
+  // This sends the input and conversation history to the intent classification API
+
+  const intentRes = await fetch("/api/classify-intent", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ query: input, conversationHistory }),
+})
+
+// we run a switch statement to handle different intents
+const {intent} = await intentRes.json()
+  switch (intent) {
+  case "food_order":
+    await handleFoodOrder({
+      input,
+      cart,
+      setCart,
+      setMessages,
+      assistantMessageId: assistantMessage.id,
+      getCurrentConversationHistory,
+    })
+    setIsProcessing(false)
+    break
+    
+    case "product_search":
+      await handleProductSearch({
+        input,
+        setMessages,
+        assistantMessageId: assistantMessage.id,
+        getCurrentConversationHistory,
+        generateResponse
       })
-
-      const data = await response.json()
-
-      // Update the assistant message with the results and AI response
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === assistantMessage.id
-            ? {
-                ...msg,
-                content: data.aiResponse || generateResponse(input, results),
-                products: results,
-                isLoading: false,
-              }
-            : msg,
-        ),
-      )
-    } catch (error) {
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === assistantMessage.id
-            ? {
-                ...msg,
-                content: "I'm sorry, I couldn't process your request. Please try again.",
-                isLoading: false,
-              }
-            : msg,
-        ),
-      )
-    } finally {
       setIsProcessing(false)
-      // Ensure we scroll to bottom after processing
-      scrollToBottom()
-    }
+    break
+
+  // add more flows like 'order_status', 'greeting', etc.
+  
+  // default:
+  //   // fallback: unknown intent
+  //   setMessages((prev) =>
+  //     prev.map((msg) =>
+  //       msg.id === assistantMessage.id
+  //         ? {
+  //             ...msg,
+  //             content: "I'm not sure how to help with that yet.",
+  //             messageType: "text",
+  //             isLoading: false,
+  //           }
+  //         : msg,
+  //     ),
+  //   )
+    
   }
+}
 
   const handleImageUpload = async (file: File) => {
     setShowImageUpload(false)
@@ -340,6 +542,7 @@ export default function ConversationalShop() {
                 ...msg,
                 content: "Here are some products similar to your image:",
                 products: results,
+                messageType: "product_search" as const,
                 isLoading: false,
               }
             : msg,
@@ -352,6 +555,7 @@ export default function ConversationalShop() {
             ? {
                 ...msg,
                 content: "I'm sorry, I couldn't process your image. Please try again.",
+                messageType: "general" as const,
                 isLoading: false,
               }
             : msg,
@@ -368,20 +572,6 @@ export default function ConversationalShop() {
   }
 
   const generateResponse = (query: string, products: Product[]): string => {
-    // Check if this is a food order
-    if (products.length === 1 && products[0].isCustomFood) {
-      const product = products[0]
-      const customizations = product.foodCustomizations || []
-
-      if (customizations.length > 0) {
-        return `I've prepared your ${product.name} order with the following customizations: ${customizations
-          .map((c) => `${c.option}`)
-          .join(", ")}. Would you like to add this to your cart?`
-      } else {
-        return `I've prepared your ${product.name} order. Would you like to add this to your cart?`
-      }
-    }
-
     // Regular product search
     if (products.length === 0) {
       return `I couldn't find any products matching "${query}". Would you like to try a different search or browse our categories?`
@@ -448,9 +638,34 @@ export default function ConversationalShop() {
     }
   }
 
-  const handleViewProductDetails = (product: Product) => {
+  const handleViewProductDetails = (product: Product, allProducts?: Product[]) => {
     setSelectedProduct(product)
+
+    if (allProducts) {
+      setSelectedProducts(allProducts)
+      const index = allProducts.findIndex((p) => p.id === product.id)
+      setCurrentProductIndex(index >= 0 ? index : 0)
+    } else {
+      setSelectedProducts([product])
+      setCurrentProductIndex(0)
+    }
+
     setShowProductDetail(true)
+  }
+
+  const handleProductNavigation = (direction: "prev" | "next") => {
+    if (!selectedProducts.length) return
+
+    let newIndex = currentProductIndex
+
+    if (direction === "prev" && currentProductIndex > 0) {
+      newIndex = currentProductIndex - 1
+    } else if (direction === "next" && currentProductIndex < selectedProducts.length - 1) {
+      newIndex = currentProductIndex + 1
+    }
+
+    setCurrentProductIndex(newIndex)
+    setSelectedProduct(selectedProducts[newIndex])
   }
 
   const handlePageChange = (page: number) => {
@@ -528,6 +743,7 @@ export default function ConversationalShop() {
           id: Date.now().toString(),
           role: "assistant",
           content: `Thank you for your order! Your order #${newOrder.orderNumber} has been placed successfully. You can track your order in the Orders section.`,
+          messageType: "general",
         },
       ])
     } catch (error) {
@@ -744,7 +960,9 @@ export default function ConversationalShop() {
                 {/* This is where the Clerk user avatar would be rendered */}
                 {/* For now, using a placeholder */}
                 <div className="bg-accent2-500 h-full w-full flex items-center justify-center">
-                  <User className="h-4 w-4 text-white" />
+                  <SignedIn>
+                    <UserButton/>
+                  </SignedIn>
                 </div>
               </Button>
             </DropdownMenuTrigger>
@@ -842,15 +1060,21 @@ export default function ConversationalShop() {
                   <div
                     className={`flex gap-3 max-w-[95%] ${message.role === "user" ? "flex-row-reverse" : "flex-row"}`}
                   >
-                    <Avatar
+                  {
+                    message.role === "user" ? 
+                    <div className="h-8 w-8 ">
+                      <img src={user?.imageUrl} className="rounded-full"/>
+                    </div>
+                     : <Avatar
                       className={`h-8 w-8 ${
-                        message.role === "user"
-                          ? "bg-gradient-to-br from-accent1-400 to-accent1-600"
-                          : "bg-gradient-to-br from-brand-400 to-brand-600"
+                        
+                        "bg-gradient-to-br from-brand-400 to-brand-600"
                       }`}
                     >
-                      <div className="text-xs font-medium text-white">{message.role === "user" ? "You" : "AI"}</div>
+                      {/* <div className="text-xs font-medium text-white">{message.role === "user" ? "You" : "AI"}</div> */}
                     </Avatar>
+                  }
+                   
 
                     <div className="space-y-2 flex-1">
                       <Card
@@ -866,7 +1090,20 @@ export default function ConversationalShop() {
                             <span>Thinking...</span>
                           </div>
                         ) : (
-                          <p>{message.content}</p>
+                          <div>
+                            <p className="whitespace-pre-line">{message.content}</p>
+                            {message.messageType === "food_order" && message.foodOrderData && (
+                              <div className="mt-2 p-2 bg-brand-50 rounded-md border">
+                                <p className="text-sm font-medium text-brand-700">Order Summary:</p>
+                                <p className="text-sm">{message.foodOrderData.orderSummary}</p>
+                                {message.foodOrderData.totalEstimatedPrice > 0 && (
+                                  <p className="text-sm font-medium">
+                                    Total: ${message.foodOrderData.totalEstimatedPrice.toFixed(2)}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         )}
                       </Card>
 
@@ -888,7 +1125,7 @@ export default function ConversationalShop() {
                                 key={product.id}
                                 product={product}
                                 onAddToCart={() => addToCart(product, 1)}
-                                onViewDetails={() => handleViewProductDetails(product)}
+                                onViewDetails={() => handleViewProductDetails(product, message.products)}
                                 compact={true}
                               />
                             ))}
@@ -935,7 +1172,7 @@ export default function ConversationalShop() {
                 <Textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask about products, order food, or type what you're looking for..."
+                  placeholder="Order food (e.g., '2 plates of rice with chicken') or search for products..."
                   className="min-h-10 flex-1 resize-none border-brand-200 focus-visible:ring-brand-500"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
@@ -965,6 +1202,9 @@ export default function ConversationalShop() {
         isOpen={showProductDetail}
         onClose={() => setShowProductDetail(false)}
         onAddToCart={addToCart}
+        products={selectedProducts}
+        currentIndex={currentProductIndex}
+        onNavigate={handleProductNavigation}
       />
 
       {/* Payment Modal */}
@@ -1005,3 +1245,4 @@ export default function ConversationalShop() {
     </div>
   )
 }
+

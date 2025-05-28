@@ -340,10 +340,10 @@ const foodItems: FoodItem[] = [
 ]
 
 // Function to search products based on text query
-export async function searchProducts(query: string): Promise<Product[]> {
+export async function searchProducts(query: string): Promise<{ products: Product[]; aiResponse: string }> {
   try {
     // Call our API endpoint
-    const response = await fetch("/api/search", {
+    const response = await fetch("/api/product-search", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -358,7 +358,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
     const data = await response.json()
 
     // Map the MongoDB products to our frontend Product type
-    return data.products.map((product: any) => ({
+    const products: Product[] =  data.products.map((product: any) => ({
       id: product._id,
       name: product.name,
       description: product.description,
@@ -368,9 +368,16 @@ export async function searchProducts(query: string): Promise<Product[]> {
       colors: product.colors,
       sizes: product.sizes,
     }))
+    return {
+      products,
+      aiResponse : data.aiResponse,
+    }
   } catch (error) {
     console.error("Error searching products:", error)
-    return []
+    return   {
+      products: [],
+      aiResponse: "Sorry, something went wrong while searching.",
+    }
   }
 }
 

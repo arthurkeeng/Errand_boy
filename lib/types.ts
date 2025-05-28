@@ -61,3 +61,27 @@ export interface Order {
   trackingNumber?: string
   estimatedDelivery?: number
 }
+
+
+
+
+export type Message = {
+  id: string
+  role: "user" | "assistant"
+  content: string
+  isLoading?: boolean
+  messageType?: "food_order" | "product_search" | "general"
+  products?: Product[]
+  foodOrderData?: any
+}
+
+
+export type Conversation = {
+  id: string
+  title: string
+  messages: Message[]
+  lastUpdated: number
+  preview: string
+  cart?: Product[]
+  conversationHistory?: string[]
+}

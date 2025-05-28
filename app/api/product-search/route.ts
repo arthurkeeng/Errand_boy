@@ -58,8 +58,6 @@ export async function POST(req: NextRequest) {
       mongoQuery.$text = { $search: query }
     }
 
-    console.log("MongoDB query:", mongoQuery)
-
     // Execute the query
     let products = await Product.find(mongoQuery).limit(12)
 
