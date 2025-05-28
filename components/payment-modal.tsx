@@ -63,7 +63,7 @@ export default function PaymentModal({
 const handler = paystack.setup({
   key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
   email: "customer@example.com",
-  amount: total * 100,
+  amount: 50000,
   currency: "NGN",
   ref,
   callback: async (response: { reference: string }) => {
