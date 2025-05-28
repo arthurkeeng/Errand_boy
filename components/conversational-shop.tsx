@@ -1219,7 +1219,9 @@ const {intent} = await intentRes.json()
       )}
 
       {/* Orders Modal */}
-      {showOrders && <OrdersModal orders={orders} isOpen={showOrders} onClose={() => setShowOrders(false)} />}
+      {showOrders && <OrdersModal
+      //  orders={orders} 
+       isOpen={showOrders} onClose={() => setShowOrders(false)} />}
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteConfirmation} onOpenChange={setShowDeleteConfirmation}>
