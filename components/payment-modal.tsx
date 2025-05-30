@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +15,13 @@ import { ShoppingCart, Minus, Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { groupCartItems, type CartItemGroup } from "@/lib/cart-utils";
+// import { PaystackButton } from 'react-paystack'
+import dynamic from "next/dynamic";
+
+const PaystackButton = dynamic(() =>
+  import("react-paystack").then((mod) => mod.PaystackButton), {
+  ssr: false
+});
 
 interface PaymentModalProps {
   cart: any[];
@@ -42,6 +49,7 @@ export default function PaymentModal({
   const tax = subtotal * 0.08;
   const total = subtotal + tax;
 
+  const [isDialogOpen, setIsDialogOpen] = useState(true);
   // Load Paystack script
   useEffect(() => {
     const scriptId = "paystack-script";
@@ -53,46 +61,8 @@ export default function PaymentModal({
     script.async = true;
     document.body.appendChild(script);
   }, []);
+  
 
-  const handlePaystackPayment = () => {
-    const paystack = window.PaystackPop;
-    if (!paystack) return alert("Paystack failed to load.");
-
-    const ref = `ps_${Date.now()}`;
-
-const handler = paystack.setup({
-  key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-  email: "customer@example.com",
-  amount: 50000,
-  currency: "NGN",
-  ref,
-  callback: async (response: { reference: string }) => {
-    try {
-      const res = await fetch("/api/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reference: response.reference }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        console.log("Payment verified!", data.data);
-        // ✅ Place order success logic here:
-        // onCheckout();
-      } else {
-        console.error("Verification failed:", data.error);
-      }
-    } catch (err) {
-      console.error("Verification error", err);
-    }
-  },
-  onClose: () => {
-    console.log("Payment popup closed.");
-  },
-});
-
-handler.openIframe(); // ✅ explicitly call openIframe
-
-  };
 
   const handleRemoveGroup = (group: CartItemGroup, quantityToRemove = 1) => {
     for (let i = 0; i < quantityToRemove && group.cartItemIds.length > 0; i++) {
@@ -107,7 +77,7 @@ handler.openIframe(); // ✅ explicitly call openIframe
   };
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -227,12 +197,47 @@ handler.openIframe(); // ✅ explicitly call openIframe
             Continue Shopping
           </Button>
           {cart.length > 0 && (
-            <Button
-              onClick={handlePaystackPayment}
-              className="bg-green-600 hover:bg-green-700 text-white"
+            // <Button>
+            
+            <p
+            onClick={()=> setIsDialogOpen(false) }
             >
-              Pay ₦{total.toFixed(2)}
-            </Button>
+               <PaystackButton
+               className="rounded-md px-4 py-2
+              bg-green-600 hover:bg-green-700 text-white
+              "
+              text={`Pay ₦${Math.ceil(total)}`}
+              amount={Math.ceil(total * 100)} // Paystack expects amount in kobo
+              email="omnidev.build@gmail.com"
+              publicKey={process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || ""}
+              onSuccess={async (response) => {
+                try {
+                  const res = await fetch("/api/verify", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ reference: response.reference }),
+                  });
+                  const {data} = await res.json();
+                  if (data.status === "success") {
+                    // console.log("Payment verified!", data.data);
+                    onCheckout();
+                  } else {
+                    console.error("Verification failed:", data.error);
+                  }
+                } catch (err) {
+                  console.error("Verification error", err);
+                }
+              
+              }}
+              onClose={() => {
+                setIsDialogOpen(true)
+                console.log("Payment popup closed.")}
+                
+              }
+            /> 
+            </p>
+          
+            // </Button>
           )}
         </DialogFooter>
       </DialogContent>

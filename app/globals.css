@@ -90,3 +90,10 @@
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
 }
+/* styles/globals.css */
+.paystack-overlay,
+.paystack-popup {
+  z-index: 9999 !important;
+  position: fixed !important;
+}
+
