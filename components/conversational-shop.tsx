@@ -694,7 +694,7 @@ export default function ConversationalShop() {
   };
 
   return (
-    <div className="flex flex-col h-[600px] rounded-lg overflow-hidden shadow-lg bg-white/80 backdrop-blur-sm border border-brand-200">
+    <div className="flex flex-col h-[600px] rounded-lg overflow-hidden shadow-lg bg-white/80 backdrop-blur-sm border border-brand-200 relative">
       {/* <Toaster /> */}
       <div className="flex justify-between items-center p-4 bg-gradient-to-r from-brand-500 to-brand-600 text-white">
         <div className="flex items-center gap-2">
@@ -996,8 +996,8 @@ export default function ConversationalShop() {
         >
           {/* Use a div with ref and overflow-auto instead of ScrollArea for better control */}
           <div
-            className="flex-1 p-4 bg-gradient-to-b from-white to-brand-50 overflow-auto"
-            ref={scrollAreaRef}
+           className="flex-1 overflow-auto p-4 bg-gradient-to-b from-white to-brand-50"
+    ref={scrollAreaRef}
           >
             <div className="space-y-4">
               {messages.map((message) => (
@@ -1130,7 +1130,7 @@ export default function ConversationalShop() {
           ) : (
             <form
               onSubmit={handleSendMessage}
-              className="p-4 border-t bg-white"
+              className="p-4 border-t bg-white sticky bottom-0 z-10 md:static md:z-auto"
             >
               <div className="flex gap-2">
                 <Button
