@@ -5,6 +5,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 import OrderHistory from "@/components/order-history"
 import type { Order } from "@/lib/types"
 import { Loader2 } from "lucide-react"
+import { useUser } from "@clerk/nextjs"
 
 interface OrdersModalProps {
   isOpen: boolean
@@ -15,6 +16,7 @@ export default function OrdersModal({ isOpen, onClose }: OrdersModalProps) {
   const [orders, setOrders] = useState<Order[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const userId = useUser().user?.id
 
   useEffect(() => {
     // Only fetch orders when the modal is open
@@ -28,26 +30,26 @@ export default function OrdersModal({ isOpen, onClose }: OrdersModalProps) {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch("/api/orders")
-
+      const response = await fetch(`/api/orders?customerId=${userId}`)
       if (!response.ok) {
         throw new Error("Failed to fetch orders")
       }
-
+      
       const data = await response.json()
+      console.log('orders include' , data)
 
       // Transform the MongoDB orders to match our frontend Order type
       const transformedOrders: Order[] = data.orders.map((order: any) => ({
-        id: order.orderNumber,
+        id: order._id,
         date: new Date(order.date).getTime(),
         items: order.items,
-        subtotal: order.subtotal,
+        subtotal: order.payment.total,
         tax: order.tax,
-        total: order.total,
+        total: order.payment.total,
         status: order.status,
-        shippingAddress: order.shippingAddress,
+        shippingAddress: order.customer.address,
         trackingNumber: order.trackingNumber,
-        estimatedDelivery: order.estimatedDelivery ? new Date(order.estimatedDelivery).getTime() : undefined,
+        estimatedDelivery: order.estimatedDelivery ? new Date(order.estimatedDelivery).getTime() : new Date().getTime(),
       }))
 
       setOrders(transformedOrders)

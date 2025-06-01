@@ -52,6 +52,7 @@ const OrderItemSchema = new Schema<OrderItem>(
 
 const CustomerSchema = new Schema<CustomerInfo>(
   {
+    customerId: { type: String, required: true },
     name: { type: String, required: true },
     email: { type: String, required: true },
     phone: { type: String, required: true },

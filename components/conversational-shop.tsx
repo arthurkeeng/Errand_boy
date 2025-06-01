@@ -606,7 +606,7 @@ export default function ConversationalShop() {
       };
 
       // Send order to API
-      const response = await fetch("/api/orders", {
+      const response = await fetch(`/api/orders`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -630,7 +630,6 @@ export default function ConversationalShop() {
       // Close the payment modal
       setShowPayment(false);
 
-      console.log('the new order ' , newOrder)
       // Show success toast
       toast({
         title: "Order Placed",
@@ -698,8 +697,10 @@ export default function ConversationalShop() {
     <div className="flex flex-col h-[600px] rounded-lg overflow-hidden shadow-lg bg-white/80 backdrop-blur-sm border border-brand-200">
       <Toaster />
       <div className="flex justify-between items-center p-4 bg-gradient-to-r from-brand-500 to-brand-600 text-white">
-        <div className="flex items-center gap-2">
-          <Button
+        {/* <div className="flex items-center gap-2"> */}
+        <div className="flex overflow-x-auto gap-2 md:gap-4 no-scrollbar px-2 md:px-0">
+  <div className="flex flex-nowrap items-center gap-2">
+    <Button
             variant="ghost"
             size="sm"
             className="md:hidden text-white hover:bg-white/20 hover:text-white"
@@ -902,7 +903,11 @@ export default function ConversationalShop() {
           </DropdownMenu>
         </div>
       </div>
+  {/* </div> */}
+  </div>
+      
 
+{/* not this section */}
       <div className="flex flex-1 overflow-hidden">
         {/* Mobile History Sidebar */}
         {showHistory && (

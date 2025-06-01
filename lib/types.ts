@@ -54,7 +54,6 @@ export interface Order {
   date: number
   items: OrderItem[]
   subtotal: number
-  tax: number
   total: number
   status: OrderStatus
   shippingAddress?: string

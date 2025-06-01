@@ -20,6 +20,7 @@ export async function POST(req: Request) {
       notes,
     } = body
 
+
     if (!customer || !items || !payment || !date) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -43,6 +44,40 @@ export async function POST(req: Request) {
     console.error("Error creating order:", error)
     return NextResponse.json(
       { error: "Failed to create order" },
+      { status: 500 }
+    )
+  }
+}
+
+export async function GET(req: Request) {
+  try {
+    await connectToDatabase()
+    const { searchParams } = new URL(req.url)
+    const customerId = searchParams.get("customerId")
+    console.log('Fetching orders...' , customerId)
+
+    const orders = await Order.find({ "customer.customerId": customerId })
+              .sort({ createdAt: -1 })        // newest first (optional)
+              .lean();   
+              
+
+    // if (orderId) {
+    //   const order = await Order.find()
+    //   if (!order) {
+    //     return NextResponse.json(
+    //       { error: "Order not found" },
+    //       { status: 404 }
+    //     )
+    //   }
+    //   return NextResponse.json(order, { status: 200 })
+    // }
+
+
+    return NextResponse.json({orders}, { status: 200 })
+  } catch (error) {
+    console.error("Error fetching orders:", error)
+    return NextResponse.json(
+      { error: "Failed to fetch orders" },
       { status: 500 }
     )
   }
