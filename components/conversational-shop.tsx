@@ -71,7 +71,7 @@ type User = {
 };
 
 const PRODUCTS_PER_PAGE = 8;
-
+    
 export default function ConversationalShop() {
   const [activeConversation, setActiveConversation] = useState<string | null>(
     null
@@ -695,12 +695,11 @@ export default function ConversationalShop() {
 
   return (
     <div className="flex flex-col h-[600px] rounded-lg overflow-hidden shadow-lg bg-white/80 backdrop-blur-sm border border-brand-200">
-      <Toaster />
+      {/* <Toaster /> */}
       <div className="flex justify-between items-center p-4 bg-gradient-to-r from-brand-500 to-brand-600 text-white">
-        {/* <div className="flex items-center gap-2"> */}
-        <div className="flex overflow-x-auto gap-2 md:gap-4 no-scrollbar px-2 md:px-0">
-  <div className="flex flex-nowrap items-center gap-2">
-    <Button
+        <div className="flex items-center gap-2">
+        
+          <Button
             variant="ghost"
             size="sm"
             className="md:hidden text-white hover:bg-white/20 hover:text-white"
@@ -711,6 +710,7 @@ export default function ConversationalShop() {
           </Button>
           <h2 className="font-semibold hidden md:block">Errand Boy</h2>
         </div>
+       
 
         <div className="flex items-center gap-2">
           <Popover>
@@ -903,11 +903,7 @@ export default function ConversationalShop() {
           </DropdownMenu>
         </div>
       </div>
-  {/* </div> */}
-  </div>
-      
 
-{/* not this section */}
       <div className="flex flex-1 overflow-hidden">
         {/* Mobile History Sidebar */}
         {showHistory && (
