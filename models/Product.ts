@@ -1,4 +1,4 @@
-import mongoose, { Schema, type Document } from "mongoose"
+import mongoose, { Schema, type Document , models ,model} from "mongoose"
 
 // Interface
 export interface IProduct extends Document {
@@ -15,7 +15,8 @@ export interface IProduct extends Document {
   inStock: boolean
   rating?: number
   features?: string[]
-  metadata?: Record<string, any>
+  metadata?: Record<string, any>,
+  subCategory?: string // e.g. "main", "drink", "shirt", "phone"
   embedding?: {
     vector: number[]
     dimension: number
@@ -36,26 +37,38 @@ const productSchema = new Schema<IProduct>(
     name: { type: String, required: true, index: true },
     description: { type: String, required: true },
     price: { type: Number, required: true },
-    category: { type: String, required: true, index: true },
+    category: { type: String, required: true, index: true }, // e.g. "food", "clothing", "electronics"
+    subCategory: { type: String }, // e.g. "main", "drink", "shirt", "phone"
+
     brand: { type: String },
     colors: { type: [String], index: true },
-    sizes: { type: [String] },
-    weight: { type: String }, // e.g. "500g", "1.2kg", for groceries or hardware
+    sizes: { type: [String] }, // for clothing or items with size
+    weight: { type: String }, // useful for food, hardware, etc.
+
     images: { type: [String], required: true },
     tags: { type: [String], index: true },
     inStock: { type: Boolean, default: true },
+
     rating: { type: Number, min: 0, max: 5 },
-    features: { type: [String] },
-    metadata: { type: Schema.Types.Mixed }, // Custom per-category properties
-    embedding: embeddingSchema, // For semantic search
+    features: { type: [String] }, // e.g. ["waterproof", "Bluetooth 5.0"]
+
+    // For extensibility across all types of items
+    metadata: { type: Schema.Types.Mixed }, // e.g. { foodType: 'main', calories: 300 } or { voltage: "220V" }
+
+    // For AI-based recommendations or semantic search
+    embedding: embeddingSchema,
   },
   { timestamps: true }
-)
+);
 
 // Text index for full-text search
-productSchema.index({ name: "text", description: "text", tags: "text" })
 
-export default mongoose.models.Product || mongoose.model<IProduct>("Product", productSchema)
+// ✅ Define indexes before model creation
+productSchema.index({ name: "text", description: "text", tags: "text" });
+productSchema.index({ category: 1, subCategory: 1 }); // optional
+
+export default mongoose.models?.Product || model<IProduct>("Product", productSchema)
+// export default model<IProduct>("Product", productSchema)
 
 
 // import mongoose, { Schema, type Document } from "mongoose"

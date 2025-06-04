@@ -90,18 +90,21 @@
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
 }
-/* styles/globals.css */
-.paystack-overlay,
-.paystack-popup {
-  z-index: 9999 !important;
-  position: fixed !important;
+
+/* Mobile viewport fix */
+@supports (-webkit-touch-callout: none) {
+  .mobile-viewport-fix {
+    height: -webkit-fill-available;
+  }
 }
 
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+/* Prevent zoom on input focus for iOS */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
 }
-.no-scrollbar {
-  -ms-overflow-style: none; /* IE/Edge */
-  scrollbar-width: none; /* Firefox */
-}
-

@@ -1,5 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import type { Product, FoodCustomization } from "./types"
+import connectToDatabase from "./mongodb"
+import Products, { IProduct } from "@/models/Product"
 
 // Initialize the Google Generative AI with your API key
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
@@ -20,6 +22,12 @@ export interface ParsedFoodOrder {
   totalEstimatedPrice: number
   orderSummary: string
 }
+
+type MockMenuFormat = Record<string, {
+  basePrice: number;
+  category: string;
+  description: string;
+}>;
 
 // Food menu database with prices
 const FOOD_MENU = {
@@ -52,6 +60,32 @@ const FOOD_MENU = {
   bread: { basePrice: 2.99, category: "side", description: "Fresh bread rolls" },
   plantain: { basePrice: 3.99, category: "side", description: "Fried plantain" },
 }
+
+
+ export async function getMockFoodMenu(): Promise<MockMenuFormat> {
+  await connectToDatabase()
+  const products: IProduct[] = await Products.find({ category: "food" }).lean<IProduct[]>();
+
+  const transformed: MockMenuFormat = {};
+
+  for (const product of products) {
+    const key = product.name.toLowerCase();
+    const subCategory = product.subCategory || product.metadata?.foodType || "main";
+
+    transformed[key] = {
+      basePrice: product.price,
+      category: subCategory,
+      description: product.description
+    };
+  }
+
+  return transformed;
+}
+    
+
+
+
+
 
 /**
  * Analyzes user input to determine if it's a food order

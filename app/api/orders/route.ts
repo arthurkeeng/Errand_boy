@@ -3,6 +3,8 @@ import { NextResponse } from "next/server"
 import mongoose from "mongoose"
 import connectToDatabase from "@/lib/mongodb"
 import Order from "@/models/orders"
+import { importFoodMenu } from "@/lib/script"
+import { getMockFoodMenu } from "@/lib/food-ordering"
 // You must have this function in your lib
 
 export async function POST(req: Request) {
@@ -52,6 +54,7 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   try {
     await connectToDatabase()
+   
     const { searchParams } = new URL(req.url)
     const customerId = searchParams.get("customerId")
     console.log('Fetching orders...' , customerId)
