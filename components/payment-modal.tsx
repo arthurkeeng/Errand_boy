@@ -193,7 +193,7 @@ export default function PaymentModal({
         )}
 
         <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} className="w-full sm:w-auto border-brand-200 hover:bg-brand-50">
             Continue Shopping
           </Button>
           {cart.length > 0 && (
