@@ -192,7 +192,7 @@ export default function PaymentModal({
           </>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
           <Button variant="outline" onClick={onClose}>
             Continue Shopping
           </Button>
