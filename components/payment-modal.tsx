@@ -197,15 +197,15 @@ export default function PaymentModal({
             Continue Shopping
           </Button>
           {cart.length > 0 && (
-            // <Button>
+            
             
             <p
             onClick={()=> setIsDialogOpen(false) }
-             className="w-full sm:w-auto bg-brand-500 hover:bg-brand-600"
+             className="w-full sm:w-auto bg-green-600 hover:bg-green-700 sm:text-center"
             >
                <PaystackButton
                className="rounded-md px-4 py-2
-              bg-green-600 hover:bg-green-700 text-white
+               text-white
               "
               text={`Pay ₦${Math.ceil(total)}`}
               amount={Math.ceil(total * 100)} // Paystack expects amount in kobo
@@ -238,8 +238,9 @@ export default function PaymentModal({
             /> 
             </p>
           
-            // </Button>
+            
           )}
+          {/* end of dialog footer */}
         </DialogFooter>
       </DialogContent>
     </Dialog>
