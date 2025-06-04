@@ -1,7 +1,6 @@
 import mongoose from "mongoose"
 
-// const MONGODB_URI = process.env.MONGODB_URI!
-const MONGODB_URI = "mongodb+srv://omnidevbuild:12Arthur@cluster0.a8li9il.mongodb.net/errandboy?retryWrites=true&w=majority&appName=Cluster0"
+const MONGODB_URI = process.env.MONGODB_URI!
 
 
 console.log('the mongo uris',MONGODB_URI)
