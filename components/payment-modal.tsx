@@ -201,6 +201,7 @@ export default function PaymentModal({
             
             <p
             onClick={()=> setIsDialogOpen(false) }
+             className="w-full sm:w-auto bg-brand-500 hover:bg-brand-600"
             >
                <PaystackButton
                className="rounded-md px-4 py-2

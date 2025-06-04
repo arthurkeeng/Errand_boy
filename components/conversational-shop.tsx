@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Card } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Avatar } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   Loader2,
   Send,
@@ -22,22 +22,30 @@ import {
   Bell,
   Package,
   Trash2,
-} from "lucide-react"
-import { searchProducts, uploadImageSearch } from "@/lib/product-search"
-import { removeItemsFromCart, addItemsToCart, generateModificationResponse } from "@/lib/cart-utils"
-import { convertFoodOrderToProducts } from "@/lib/food-ordering"
-import type { Product, Order, Conversation } from "@/lib/types"
-import ProductCard from "@/components/product-card"
-import ProductDetail from "@/components/product-detail"
-import Pagination from "@/components/pagination"
-import ImageUpload from "@/components/image-upload"
-import PaymentModal from "@/components/payment-modal"
-import OrdersModal from "@/components/orders-modal"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { format } from "@/lib/utils"
-import { useToast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/toaster"
-import { getOrders, generateMockOrders } from "@/lib/order-utils"
+} from "lucide-react";
+import { searchProducts, uploadImageSearch } from "@/lib/product-search";
+import {
+  removeItemsFromCart,
+  addItemsToCart,
+  generateModificationResponse,
+} from "@/lib/cart-utils";
+import { convertFoodOrderToProducts } from "@/lib/food-ordering";
+import type { Product, Order, Conversation } from "@/lib/types";
+import ProductCard from "@/components/product-card";
+import ProductDetail from "@/components/product-detail";
+import Pagination from "@/components/pagination";
+import ImageUpload from "@/components/image-upload";
+import PaymentModal from "@/components/payment-modal";
+import OrdersModal from "@/components/orders-modal";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
+import { Toaster } from "@/components/toaster";
+import { getOrders, generateMockOrders } from "@/lib/order-utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,21 +53,27 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { handleFoodOrder } from "@/handlers/food-handler"
-import { handleProductSearch } from "@/handlers/product-handler"
-import { useUser } from "@clerk/nextjs"
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { handleFoodOrder } from "@/handlers/food-handler";
+import { handleProductSearch } from "@/handlers/product-handler";
+import { useUser } from "@clerk/nextjs";
 
 type Message = {
-  id: string
-  role: "user" | "assistant"
-  content: string
-  products?: Product[]
-  isLoading?: boolean
-  messageType?: "food_order" | "product_search" | "general"
-  foodOrderData?: any
-}
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  products?: Product[];
+  isLoading?: boolean;
+  messageType?: "food_order" | "product_search" | "general";
+  foodOrderData?: any;
+};
 type User = {
   user_id: string;
   email: string;
@@ -75,134 +89,145 @@ type User = {
 //   conversationHistory?: string[]
 // }
 
-const PRODUCTS_PER_PAGE = 8
+const PRODUCTS_PER_PAGE = 8;
 
 export default function ConversationalShop() {
-  const [activeConversation, setActiveConversation] = useState<string | null>(null)
-  const [conversations, setConversations] = useState<Conversation[]>([])
-  const [messages, setMessages] = useState<Message[]>([])
-  const [input, setInput] = useState("")
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [showImageUpload, setShowImageUpload] = useState(false)
-  const [isImageUploading, setIsImageUploading] = useState(false)
-  const [cart, setCart] = useState<Product[]>([])
-  const [showPayment, setShowPayment] = useState(false)
-  const [showHistory, setShowHistory] = useState(false)
-  const [notificationCount, setNotificationCount] = useState(2)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
-  const [selectedProducts, setSelectedProducts] = useState<Product[]>([])
-  const [currentProductIndex, setCurrentProductIndex] = useState(0)
-  const [showProductDetail, setShowProductDetail] = useState(false)
-  const [orders, setOrders] = useState<Order[]>([])
-  const [showOrders, setShowOrders] = useState(false)
-  const { toast } = useToast()
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
-  const [isInputFocused, setIsInputFocused] = useState(false)
+  const [activeConversation, setActiveConversation] = useState<string | null>(
+    null
+  );
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showImageUpload, setShowImageUpload] = useState(false);
+  const [isImageUploading, setIsImageUploading] = useState(false);
+  const [cart, setCart] = useState<Product[]>([]);
+  const [showPayment, setShowPayment] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(2);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+  const [currentProductIndex, setCurrentProductIndex] = useState(0);
+  const [showProductDetail, setShowProductDetail] = useState(false);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [showOrders, setShowOrders] = useState(false);
+  const { toast } = useToast();
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const [currentUser, setCurrentUser] = useState<User>();
 
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const scrollAreaRef = useRef<HTMLDivElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-   const { user } = useUser();
+  const { user } = useUser();
   useEffect(() => {
     if (user)
       setCurrentUser({
         user_id: user.id,
         email: user.emailAddresses[0]?.emailAddress || "",
       });
-    console.log('the user is ' , user)
+    console.log("the user is ", user);
   }, [user]);
   // Load conversations and orders from localStorage on initial render
   useEffect(() => {
     // Load conversations
-    const savedConversations = localStorage.getItem("errandBoyConversations")
+    const savedConversations = localStorage.getItem("errandBoyConversations");
     if (savedConversations) {
-      setConversations(JSON.parse(savedConversations))
+      setConversations(JSON.parse(savedConversations));
     }
 
     // If there are no conversations, create a new one
     if (!savedConversations || JSON.parse(savedConversations).length === 0) {
-      createNewConversation()
+      createNewConversation();
     } else {
       // Load the most recent conversation
-      const parsedConversations = JSON.parse(savedConversations)
+      const parsedConversations = JSON.parse(savedConversations);
       const mostRecent = parsedConversations.sort(
-        (a: Conversation, b: Conversation) => b.lastUpdated - a.lastUpdated,
-      )[0]
-      setActiveConversation(mostRecent.id)
-      setMessages(mostRecent.messages)
-      setCart(mostRecent.cart || [])
+        (a: Conversation, b: Conversation) => b.lastUpdated - a.lastUpdated
+      )[0];
+      setActiveConversation(mostRecent.id);
+      setMessages(mostRecent.messages);
+      setCart(mostRecent.cart || []);
     }
 
     // Load orders
-    const savedOrders = getOrders()
+    const savedOrders = getOrders();
     if (savedOrders.length === 0) {
       // Generate mock orders for demo purposes
-      const mockOrders = generateMockOrders(8)
-      localStorage.setItem("errandBoyOrders", JSON.stringify(mockOrders))
-      setOrders(mockOrders)
+      const mockOrders = generateMockOrders(8);
+      localStorage.setItem("errandBoyOrders", JSON.stringify(mockOrders));
+      setOrders(mockOrders);
     } else {
-      setOrders(savedOrders)
+      setOrders(savedOrders);
     }
-  }, [])
+  }, []);
 
   // Save conversations to localStorage whenever they change
   useEffect(() => {
     if (conversations.length > 0) {
-      localStorage.setItem("errandBoyConversations", JSON.stringify(conversations))
+      localStorage.setItem(
+        "errandBoyConversations",
+        JSON.stringify(conversations)
+      );
     }
-  }, [conversations])
+  }, [conversations]);
 
   // Update the active conversation whenever messages or cart changes
   useEffect(() => {
     if (activeConversation) {
-      updateConversation(activeConversation, messages, cart)
+      updateConversation(activeConversation, messages, cart);
     }
-  }, [messages, cart])
+  }, [messages, cart]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    scrollToBottom();
+  }, [messages]);
 
   // Reset to page 1 when products change
   useEffect(() => {
-    setCurrentPage(1)
-  }, [messages.map((m) => m.products?.length).join(",")])
+    setCurrentPage(1);
+  }, [messages.map((m) => m.products?.length).join(",")]);
 
   // Handle viewport adjustments for mobile
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth <= 768 && isInputFocused) {
         // Prevent viewport zoom on iOS
-        const viewport = document.querySelector('meta[name="viewport"]')
+        const viewport = document.querySelector('meta[name="viewport"]');
         if (viewport) {
-          viewport.setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no")
+          viewport.setAttribute(
+            "content",
+            "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+          );
         }
       }
-    }
+    };
 
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [isInputFocused])
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isInputFocused]);
 
   // Improved scroll to bottom function
   const scrollToBottom = () => {
     // Use setTimeout to ensure this runs after the DOM has updated
     setTimeout(() => {
       if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" })
+        messagesEndRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
       }
 
       // Also ensure the scroll area is scrolled to the bottom
       if (scrollAreaRef.current) {
-        const scrollArea = scrollAreaRef.current
-        scrollArea.scrollTop = scrollArea.scrollHeight
+        const scrollArea = scrollAreaRef.current;
+        scrollArea.scrollTop = scrollArea.scrollHeight;
       }
-    }, 100)
-  }
+    }, 100);
+  };
 
   const createNewConversation = () => {
     const welcomeMessage: Message = {
@@ -211,7 +236,7 @@ export default function ConversationalShop() {
       content:
         "Hi there! How can I help you today? You can:\n• Order food (e.g., 'I want 2 plates of rice with chicken')\n• Search for products\n• Upload an image to find similar items\n• Browse categories",
       messageType: "general",
-    }
+    };
 
     const newConversation: Conversation = {
       id: Date.now().toString(),
@@ -221,26 +246,32 @@ export default function ConversationalShop() {
       preview: welcomeMessage.content,
       cart: [],
       conversationHistory: [],
-    }
+    };
 
-    setConversations((prev) => [...prev, newConversation])
-    setActiveConversation(newConversation.id)
-    setMessages([welcomeMessage])
-    setCart([])
-  }
+    setConversations((prev) => [...prev, newConversation]);
+    setActiveConversation(newConversation.id);
+    setMessages([welcomeMessage]);
+    setCart([]);
+  };
 
-  const updateConversation = (conversationId: string, updatedMessages: Message[], updatedCart: Product[]) => {
+  const updateConversation = (
+    conversationId: string,
+    updatedMessages: Message[],
+    updatedCart: Product[]
+  ) => {
     setConversations((prev) =>
       prev.map((conv) => {
         if (conv.id === conversationId) {
           // Get the last non-loading message for the preview
-          const lastMessage = [...updatedMessages].reverse().find((msg) => !msg.isLoading)
+          const lastMessage = [...updatedMessages]
+            .reverse()
+            .find((msg) => !msg.isLoading);
 
           // Update conversation history for food ordering context
           const conversationHistory = updatedMessages
             .filter((msg) => !msg.isLoading)
             .map((msg) => `${msg.role}: ${msg.content}`)
-            .slice(-10) // Keep last 10 messages for context
+            .slice(-10); // Keep last 10 messages for context
 
           return {
             ...conv,
@@ -250,56 +281,70 @@ export default function ConversationalShop() {
             title: generateConversationTitle(updatedMessages),
             cart: updatedCart,
             conversationHistory,
-          }
+          };
         }
-        return conv
-      }),
-    )
-  }
+        return conv;
+      })
+    );
+  };
 
   const generateConversationTitle = (msgs: Message[]): string => {
     // Find the first user message that has some content
-    const firstUserMessage = msgs.find((msg) => msg.role === "user" && msg.content.trim().length > 0)
+    const firstUserMessage = msgs.find(
+      (msg) => msg.role === "user" && msg.content.trim().length > 0
+    );
     if (firstUserMessage) {
       // Truncate the message if it's too long
-      const title = firstUserMessage.content.slice(0, 30)
-      return title.length < firstUserMessage.content.length ? `${title}...` : title
+      const title = firstUserMessage.content.slice(0, 30);
+      return title.length < firstUserMessage.content.length
+        ? `${title}...`
+        : title;
     }
-    return "New Conversation"
-  }
+    return "New Conversation";
+  };
 
   const loadConversation = (conversationId: string) => {
-    const conversation = conversations.find((conv) => conv.id === conversationId)
+    const conversation = conversations.find(
+      (conv) => conv.id === conversationId
+    );
     if (conversation) {
-      setActiveConversation(conversationId)
-      setMessages(conversation.messages)
-      setCart(conversation.cart || [])
-      setShowHistory(false)
+      setActiveConversation(conversationId);
+      setMessages(conversation.messages);
+      setCart(conversation.cart || []);
+      setShowHistory(false);
     }
-  }
+  };
 
   const deleteConversation = (conversationId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setConversations((prev) => prev.filter((conv) => conv.id !== conversationId))
+    e.stopPropagation();
+    setConversations((prev) =>
+      prev.filter((conv) => conv.id !== conversationId)
+    );
 
     // If the deleted conversation is the active one, load the most recent one
     if (conversationId === activeConversation) {
-      const remainingConversations = conversations.filter((conv) => conv.id !== conversationId)
+      const remainingConversations = conversations.filter(
+        (conv) => conv.id !== conversationId
+      );
       if (remainingConversations.length > 0) {
-        const mostRecent = remainingConversations.sort((a, b) => b.lastUpdated - a.lastUpdated)[0]
-        loadConversation(mostRecent.id)
+        const mostRecent = remainingConversations.sort(
+          (a, b) => b.lastUpdated - a.lastUpdated
+        )[0];
+        loadConversation(mostRecent.id);
       } else {
-        createNewConversation()
+        createNewConversation();
       }
     }
-  }
+  };
 
   const getCurrentConversationHistory = (): string[] => {
-    const conversation = conversations.find((conv) => conv.id === activeConversation)
-    return conversation?.conversationHistory || []
-  }
+    const conversation = conversations.find(
+      (conv) => conv.id === activeConversation
+    );
+    return conversation?.conversationHistory || [];
+  };
 
-   const handleSendMessage = async (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() && !showImageUpload) return;
 
@@ -376,28 +421,28 @@ export default function ConversationalShop() {
   };
 
   const handleImageUpload = async (file: File) => {
-    setShowImageUpload(false)
-    setIsImageUploading(true)
+    setShowImageUpload(false);
+    setIsImageUploading(true);
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
       content: "I'm looking for products similar to this image.",
-    }
+    };
 
     const assistantMessage: Message = {
       id: (Date.now() + 1).toString(),
       role: "assistant",
       content: "Analyzing your image to find similar products...",
       isLoading: true,
-    }
+    };
 
-    setMessages((prev) => [...prev, userMessage, assistantMessage])
-    setIsProcessing(true)
+    setMessages((prev) => [...prev, userMessage, assistantMessage]);
+    setIsProcessing(true);
 
     try {
       // Simulate API call to search products by image
-      const results = await uploadImageSearch(file)
+      const results = await uploadImageSearch(file);
 
       // Update the assistant message with the results
       setMessages((prev) =>
@@ -410,44 +455,47 @@ export default function ConversationalShop() {
                 messageType: "product_search" as const,
                 isLoading: false,
               }
-            : msg,
-        ),
-      )
+            : msg
+        )
+      );
     } catch (error) {
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === assistantMessage.id
             ? {
                 ...msg,
-                content: "I'm sorry, I couldn't process your image. Please try again.",
+                content:
+                  "I'm sorry, I couldn't process your image. Please try again.",
                 messageType: "general" as const,
                 isLoading: false,
               }
-            : msg,
-        ),
-      )
+            : msg
+        )
+      );
     } finally {
-      setIsProcessing(false)
-      setIsImageUploading(false)
+      setIsProcessing(false);
+      setIsImageUploading(false);
       // Ensure we scroll to bottom after processing
       setTimeout(() => {
-        scrollToBottom()
-      }, 300) // Additional delay to ensure content is rendered
+        scrollToBottom();
+      }, 300); // Additional delay to ensure content is rendered
     }
-  }
+  };
 
   const generateResponse = (query: string, products: Product[]): string => {
     // Regular product search
     if (products.length === 0) {
-      return `I couldn't find any products matching "${query}". Would you like to try a different search or browse our categories?`
+      return `I couldn't find any products matching "${query}". Would you like to try a different search or browse our categories?`;
     }
 
     return `Here are some products that match your search for "${query}":${
       products.length > PRODUCTS_PER_PAGE
-        ? " (showing page 1 of " + Math.ceil(products.length / PRODUCTS_PER_PAGE) + ")"
+        ? " (showing page 1 of " +
+          Math.ceil(products.length / PRODUCTS_PER_PAGE) +
+          ")"
         : ""
-    }`
-  }
+    }`;
+  };
 
   const addToCart = (product: Product, quantity = 1) => {
     // Create new product instances with their own references
@@ -456,87 +504,101 @@ export default function ConversationalShop() {
       .map(() => ({
         ...product,
         // Generate a unique ID for each cart item to ensure they're treated as separate items
-        cartItemId: `${product.id}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-      }))
+        cartItemId: `${product.id}-${Date.now()}-${Math.random()
+          .toString(36)
+          .substring(2, 9)}`,
+      }));
 
-    setCart((prev) => [...prev, ...newItems])
+    setCart((prev) => [...prev, ...newItems]);
 
     // Show a single toast notification with quantity information
     toast({
       title: "Added to Cart",
-      description: `${quantity > 1 ? `${quantity}x ` : ""}${product.name} has been added to your cart.`,
+      description: `${quantity > 1 ? `${quantity}x ` : ""}${
+        product.name
+      } has been added to your cart.`,
       variant: "success",
-    })
-  }
+    });
+  };
 
   const removeFromCart = (product: Product, index: number) => {
     setCart((prev) => {
-      const newCart = [...prev]
+      const newCart = [...prev];
       // Remove the item at the specified index
-      newCart.splice(index, 1)
-      return newCart
-    })
+      newCart.splice(index, 1);
+      return newCart;
+    });
 
     toast({
       title: "Removed from Cart",
       description: `${product.name} has been removed from your cart.`,
       variant: "success",
-    })
-  }
+    });
+  };
 
-  const updateCartItemQuantity = (product: Product, index: number, quantityChange: number) => {
+  const updateCartItemQuantity = (
+    product: Product,
+    index: number,
+    quantityChange: number
+  ) => {
     if (quantityChange > 0) {
       // Add more of this product
       const newItems = Array(quantityChange)
         .fill(null)
-        .map(() => ({ ...product }))
-      setCart((prev) => [...prev, ...newItems])
+        .map(() => ({ ...product }));
+      setCart((prev) => [...prev, ...newItems]);
 
       toast({
         title: "Updated Cart",
         description: `Added ${quantityChange}x ${product.name} to your cart.`,
         variant: "success",
-      })
+      });
     } else if (quantityChange < 0) {
       // Remove some of this product
       // This is handled by removeFromCart
     }
-  }
+  };
 
-  const handleViewProductDetails = (product: Product, allProducts?: Product[]) => {
-    setSelectedProduct(product)
+  const handleViewProductDetails = (
+    product: Product,
+    allProducts?: Product[]
+  ) => {
+    setSelectedProduct(product);
 
     if (allProducts) {
-      setSelectedProducts(allProducts)
-      const index = allProducts.findIndex((p) => p.id === product.id)
-      setCurrentProductIndex(index >= 0 ? index : 0)
+      setSelectedProducts(allProducts);
+      const index = allProducts.findIndex((p) => p.id === product.id);
+      setCurrentProductIndex(index >= 0 ? index : 0);
     } else {
-      setSelectedProducts([product])
-      setCurrentProductIndex(0)
+      setSelectedProducts([product]);
+      setCurrentProductIndex(0);
     }
 
-    setShowProductDetail(true)
-  }
+    setShowProductDetail(true);
+  };
 
   const handleProductNavigation = (direction: "prev" | "next") => {
-    if (!selectedProducts.length) return
+    if (!selectedProducts.length) return;
 
-    let newIndex = currentProductIndex
+    let newIndex = currentProductIndex;
 
     if (direction === "prev" && currentProductIndex > 0) {
-      newIndex = currentProductIndex - 1
-    } else if (direction === "next" && currentProductIndex < selectedProducts.length - 1) {
-      newIndex = currentProductIndex + 1
+      newIndex = currentProductIndex - 1;
+    } else if (
+      direction === "next" &&
+      currentProductIndex < selectedProducts.length - 1
+    ) {
+      newIndex = currentProductIndex + 1;
     }
 
-    setCurrentProductIndex(newIndex)
-    setSelectedProduct(selectedProducts[newIndex])
-  }
+    setCurrentProductIndex(newIndex);
+    setSelectedProduct(selectedProducts[newIndex]);
+  };
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-  }
- const handleCheckout = async () => {
+    setCurrentPage(page);
+  };
+  const handleCheckout = async () => {
     try {
       // Create order items from cart
       const orderItems = cart.map((product) => ({
@@ -553,9 +615,9 @@ export default function ConversationalShop() {
       }));
 
       const customer = {
-        customerId : user?.id,
+        customerId: user?.id,
         name: user?.fullName,
-        email:user?.emailAddresses[0]?.emailAddress,
+        email: user?.emailAddresses[0]?.emailAddress,
         phone: "08100944296",
         address: "123 Main St, Apt 4B, New York, NY 10001",
       };
@@ -638,52 +700,56 @@ export default function ConversationalShop() {
 
   // Get paginated products for the current message
   const getPaginatedProducts = (message: Message) => {
-    if (!message.products || message.products.length === 0) return []
+    if (!message.products || message.products.length === 0) return [];
 
-    const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE
-    const endIndex = startIndex + PRODUCTS_PER_PAGE
+    const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
+    const endIndex = startIndex + PRODUCTS_PER_PAGE;
 
-    return message.products.slice(startIndex, endIndex)
-  }
+    return message.products.slice(startIndex, endIndex);
+  };
 
   // Calculate total pages for the current message's products
   const getTotalPages = (message: Message) => {
-    if (!message.products || message.products.length === 0) return 0
-    return Math.ceil(message.products.length / PRODUCTS_PER_PAGE)
-  }
+    if (!message.products || message.products.length === 0) return 0;
+    return Math.ceil(message.products.length / PRODUCTS_PER_PAGE);
+  };
 
   // Count active orders (not delivered or cancelled)
   const activeOrdersCount = orders.filter(
-    (order) => order.status !== "delivered" && order.status !== "cancelled",
-  ).length
+    (order) => order.status !== "delivered" && order.status !== "cancelled"
+  ).length;
 
   const deleteAllConversations = () => {
-    setConversations([])
-    localStorage.removeItem("errandBoyConversations")
-    createNewConversation()
-    setShowDeleteConfirmation(false)
+    setConversations([]);
+    localStorage.removeItem("errandBoyConversations");
+    createNewConversation();
+    setShowDeleteConfirmation(false);
 
     toast({
       title: "Chat History Cleared",
       description: "All conversations have been deleted.",
       variant: "success",
-    })
-  }
+    });
+  };
 
   const handleInputFocus = () => {
-    setIsInputFocused(true)
-  }
+    setIsInputFocused(true);
+  };
 
   const handleInputBlur = () => {
-    setIsInputFocused(false)
-  }
+    // Add a small delay to prevent flickering when switching between elements
+    setTimeout(() => {
+      setIsInputFocused(false);
+    }, 100);
+  };
 
   return (
     <div className="flex flex-col h-screen md:h-[600px] md:rounded-lg overflow-hidden shadow-lg bg-white/80 backdrop-blur-sm border border-brand-200">
-
       {/* Header - Hidden on mobile when input is focused */}
       <div
-        className={`${isInputFocused ? "hidden md:flex" : "flex"} justify-between items-center p-4 bg-gradient-to-r from-brand-500 to-brand-600 text-white transition-all duration-300`}
+        className={`${
+          isInputFocused ? "hidden md:flex" : "flex"
+        } justify-between items-center p-4 bg-gradient-to-r from-brand-500 to-brand-600 text-white transition-all duration-300`}
       >
         {/* Mobile: Center title, Desktop: Left aligned */}
         <div className="flex items-center justify-center md:justify-start w-full md:w-auto">
@@ -694,7 +760,11 @@ export default function ConversationalShop() {
         <div className="hidden md:flex items-center gap-2">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 hover:text-white">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white hover:bg-white/20 hover:text-white"
+              >
                 <History className="h-4 w-4 mr-2" />
                 History
               </Button>
@@ -728,7 +798,9 @@ export default function ConversationalShop() {
               <ScrollArea className="h-80">
                 <div className="p-2">
                   {conversations.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">No conversations yet</p>
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No conversations yet
+                    </p>
                   ) : (
                     <div className="space-y-1">
                       {conversations
@@ -737,7 +809,9 @@ export default function ConversationalShop() {
                           <div
                             key={conversation.id}
                             className={`p-2 rounded-md cursor-pointer flex justify-between items-start hover:bg-brand-50 ${
-                              activeConversation === conversation.id ? "bg-brand-50 border border-brand-200" : ""
+                              activeConversation === conversation.id
+                                ? "bg-brand-50 border border-brand-200"
+                                : ""
                             }`}
                             onClick={() => loadConversation(conversation.id)}
                           >
@@ -745,17 +819,26 @@ export default function ConversationalShop() {
                               <div className="flex items-center gap-2">
                                 <Clock className="h-3 w-3 text-brand-500 flex-shrink-0" />
                                 <p className="text-xs text-muted-foreground">
-                                  {format(new Date(conversation.lastUpdated), "MMM d, h:mm a")}
+                                  {format(
+                                    new Date(conversation.lastUpdated),
+                                    "MMM d, h:mm a"
+                                  )}
                                 </p>
                               </div>
-                              <p className="font-medium text-sm line-clamp-1">{conversation.title}</p>
-                              <p className="text-xs text-muted-foreground line-clamp-1">{conversation.preview}</p>
+                              <p className="font-medium text-sm line-clamp-1">
+                                {conversation.title}
+                              </p>
+                              <p className="text-xs text-muted-foreground line-clamp-1">
+                                {conversation.preview}
+                              </p>
                             </div>
                             <Button
                               variant="ghost"
                               size="icon"
                               className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:opacity-100 hover:bg-red-100 hover:text-red-500"
-                              onClick={(e) => deleteConversation(conversation.id, e)}
+                              onClick={(e) =>
+                                deleteConversation(conversation.id, e)
+                              }
                             >
                               <X className="h-3 w-3" />
                             </Button>
@@ -816,7 +899,11 @@ export default function ConversationalShop() {
           </Button>
 
           {/* Notification Bell */}
-          <Button variant="ghost" size="icon" className="relative text-white hover:bg-white/20 hover:text-white">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative text-white hover:bg-white/20 hover:text-white"
+          >
             <Bell className="h-4 w-4" />
             {notificationCount > 0 && (
               <Badge
@@ -848,7 +935,9 @@ export default function ConversationalShop() {
               <DropdownMenuSeparator />
               <DropdownMenuItem>Profile</DropdownMenuItem>
               <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setShowOrders(true)}>Order History</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowOrders(true)}>
+                Order History
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Sign out</DropdownMenuItem>
             </DropdownMenuContent>
@@ -858,7 +947,9 @@ export default function ConversationalShop() {
 
       {/* Mobile Navigation Bar - Only visible on mobile when input is not focused */}
       <div
-        className={`${isInputFocused ? "hidden" : "flex"} md:hidden bg-gradient-to-r from-brand-500 to-brand-600 px-2 py-2 overflow-x-auto scrollbar-hide`}
+        className={`${
+          isInputFocused ? "hidden" : "flex"
+        } md:hidden bg-gradient-to-r from-brand-500 to-brand-600 px-2 py-2 overflow-x-auto scrollbar-hide`}
       >
         <div className="flex gap-2 min-w-max">
           <Button
@@ -950,7 +1041,9 @@ export default function ConversationalShop() {
               <DropdownMenuSeparator />
               <DropdownMenuItem>Profile</DropdownMenuItem>
               <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setShowOrders(true)}>Order History</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowOrders(true)}>
+                Order History
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Sign out</DropdownMenuItem>
             </DropdownMenuContent>
@@ -989,7 +1082,9 @@ export default function ConversationalShop() {
             <ScrollArea className="h-full">
               <div className="p-2">
                 {conversations.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">No conversations yet</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No conversations yet
+                  </p>
                 ) : (
                   <div className="space-y-1">
                     {conversations
@@ -998,7 +1093,9 @@ export default function ConversationalShop() {
                         <div
                           key={conversation.id}
                           className={`p-2 rounded-md cursor-pointer flex justify-between items-start hover:bg-brand-50 ${
-                            activeConversation === conversation.id ? "bg-brand-50 border border-brand-200" : ""
+                            activeConversation === conversation.id
+                              ? "bg-brand-50 border border-brand-200"
+                              : ""
                           }`}
                           onClick={() => loadConversation(conversation.id)}
                         >
@@ -1006,17 +1103,26 @@ export default function ConversationalShop() {
                             <div className="flex items-center gap-2">
                               <Clock className="h-3 w-3 text-brand-500 flex-shrink-0" />
                               <p className="text-xs text-muted-foreground">
-                                {format(new Date(conversation.lastUpdated), "MMM d, h:mm a")}
+                                {format(
+                                  new Date(conversation.lastUpdated),
+                                  "MMM d, h:mm a"
+                                )}
                               </p>
                             </div>
-                            <p className="font-medium text-sm line-clamp-1">{conversation.title}</p>
-                            <p className="text-xs text-muted-foreground line-clamp-1">{conversation.preview}</p>
+                            <p className="font-medium text-sm line-clamp-1">
+                              {conversation.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground line-clamp-1">
+                              {conversation.preview}
+                            </p>
                           </div>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 hover:bg-red-100 hover:text-red-500"
-                            onClick={(e) => deleteConversation(conversation.id, e)}
+                            onClick={(e) =>
+                              deleteConversation(conversation.id, e)
+                            }
                           >
                             <X className="h-3 w-3" />
                           </Button>
@@ -1030,19 +1136,40 @@ export default function ConversationalShop() {
         )}
 
         {/* Main Chat Area */}
-        <div className={`flex-1 flex flex-col ${showHistory ? "hidden md:flex" : "flex"}`}>
+        <div
+          className={`flex-1 flex flex-col ${
+            showHistory ? "hidden md:flex" : "flex"
+          }`}
+        >
           {/* Messages Area - Fixed height, scrollable */}
           <div
             className={`flex-1 p-4 bg-gradient-to-b from-white to-brand-50 overflow-auto transition-all duration-300 ${
               isInputFocused ? "pb-2" : "pb-4"
             }`}
             ref={scrollAreaRef}
+            onClick={() => {
+              // Reset focus state when clicking in the chat area
+              if (
+                isInputFocused &&
+                textareaRef.current &&
+                !textareaRef.current.matches(":focus")
+              ) {
+                setIsInputFocused(false);
+              }
+            }}
           >
             <div className="space-y-4">
               {messages.map((message) => (
-                <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div
+                  key={message.id}
+                  className={`flex ${
+                    message.role === "user" ? "justify-end" : "justify-start"
+                  }`}
+                >
                   <div
-                    className={`flex gap-3 max-w-[95%] ${message.role === "user" ? "flex-row-reverse" : "flex-row"}`}
+                    className={`flex gap-3 max-w-[95%] ${
+                      message.role === "user" ? "flex-row-reverse" : "flex-row"
+                    }`}
                   >
                     <Avatar
                       className={`h-8 w-8 ${
@@ -1051,7 +1178,9 @@ export default function ConversationalShop() {
                           : "bg-gradient-to-br from-brand-400 to-brand-600"
                       }`}
                     >
-                      <div className="text-xs font-medium text-white">{message.role === "user" ? "You" : "AI"}</div>
+                      <div className="text-xs font-medium text-white">
+                        {message.role === "user" ? "You" : "AI"}
+                      </div>
                     </Avatar>
 
                     <div className="space-y-2 flex-1">
@@ -1069,58 +1198,78 @@ export default function ConversationalShop() {
                           </div>
                         ) : (
                           <div>
-                            <p className="whitespace-pre-line">{message.content}</p>
-                            {message.messageType === "food_order" && message.foodOrderData && (
-                              <div className="mt-2 p-2 bg-brand-50 rounded-md border">
-                                <p className="text-sm font-medium text-brand-700">Order Summary:</p>
-                                <p className="text-sm">{message.foodOrderData.orderSummary}</p>
-                                {message.foodOrderData.totalEstimatedPrice > 0 && (
-                                  <p className="text-sm font-medium">
-                                    Total: ${message.foodOrderData.totalEstimatedPrice.toFixed(2)}
+                            <p className="whitespace-pre-line">
+                              {message.content}
+                            </p>
+                            {message.messageType === "food_order" &&
+                              message.foodOrderData && (
+                                <div className="mt-2 p-2 bg-brand-50 rounded-md border">
+                                  <p className="text-sm font-medium text-brand-700">
+                                    Order Summary:
                                   </p>
-                                )}
-                              </div>
-                            )}
+                                  <p className="text-sm">
+                                    {message.foodOrderData.orderSummary}
+                                  </p>
+                                  {message.foodOrderData.totalEstimatedPrice >
+                                    0 && (
+                                    <p className="text-sm font-medium">
+                                      Total: $
+                                      {message.foodOrderData.totalEstimatedPrice.toFixed(
+                                        2
+                                      )}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
                           </div>
                         )}
                       </Card>
 
                       {/* Show loader while image is being processed */}
-                      {isImageUploading && message.role === "assistant" && message.isLoading && (
-                        <div className="flex flex-col items-center justify-center p-6 bg-white rounded-md border border-brand-200">
-                          <Loader2 className="h-8 w-8 animate-spin text-brand-500 mb-2" />
-                          <p className="text-sm text-muted-foreground">
-                            Analyzing image and finding similar products...
-                          </p>
-                        </div>
-                      )}
-
-                      {message.products && message.products.length > 0 && !message.isLoading && (
-                        <div className="space-y-3">
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-2">
-                            {getPaginatedProducts(message).map((product) => (
-                              <ProductCard
-                                key={product.id}
-                                product={product}
-                                onAddToCart={() => addToCart(product, 1)}
-                                onViewDetails={() => handleViewProductDetails(product, message.products)}
-                                compact={true}
-                              />
-                            ))}
+                      {isImageUploading &&
+                        message.role === "assistant" &&
+                        message.isLoading && (
+                          <div className="flex flex-col items-center justify-center p-6 bg-white rounded-md border border-brand-200">
+                            <Loader2 className="h-8 w-8 animate-spin text-brand-500 mb-2" />
+                            <p className="text-sm text-muted-foreground">
+                              Analyzing image and finding similar products...
+                            </p>
                           </div>
+                        )}
 
-                          {/* Pagination */}
-                          {message.products.length > PRODUCTS_PER_PAGE && (
-                            <div className="flex justify-center mt-2">
-                              <Pagination
-                                currentPage={currentPage}
-                                totalPages={getTotalPages(message)}
-                                onPageChange={handlePageChange}
-                              />
+                      {message.products &&
+                        message.products.length > 0 &&
+                        !message.isLoading && (
+                          <div className="space-y-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-2">
+                              {getPaginatedProducts(message).map((product) => (
+                                <ProductCard
+                                  key={product.id}
+                                  product={product}
+                                  onAddToCart={() => addToCart(product, 1)}
+                                  onViewDetails={() =>
+                                    handleViewProductDetails(
+                                      product,
+                                      message.products
+                                    )
+                                  }
+                                  compact={true}
+                                />
+                              ))}
                             </div>
-                          )}
-                        </div>
-                      )}
+
+                            {/* Pagination */}
+                            {message.products.length > PRODUCTS_PER_PAGE && (
+                              <div className="flex justify-center mt-2">
+                                <Pagination
+                                  currentPage={currentPage}
+                                  totalPages={getTotalPages(message)}
+                                  onPageChange={handlePageChange}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
                     </div>
                   </div>
                 </div>
@@ -1132,14 +1281,24 @@ export default function ConversationalShop() {
 
           {/* Input Area - Fixed at bottom, moves up on mobile when focused */}
           <div
-            className={`transition-all duration-300 ${isInputFocused ? "fixed bottom-0 left-0 right-0 z-40 md:relative md:bottom-auto md:left-auto md:right-auto md:z-auto" : "relative"}`}
+            className={`transition-all duration-300 ${
+              isInputFocused
+                ? "fixed bottom-0 left-0 right-0 z-40 md:relative md:bottom-auto md:left-auto md:right-auto md:z-auto"
+                : "relative"
+            }`}
           >
             {showImageUpload ? (
               <div className="p-4 border-t bg-white">
-                <ImageUpload onUpload={handleImageUpload} onCancel={() => setShowImageUpload(false)} />
+                <ImageUpload
+                  onUpload={handleImageUpload}
+                  onCancel={() => setShowImageUpload(false)}
+                />
               </div>
             ) : (
-              <form onSubmit={handleSendMessage} className="p-4 border-t bg-white">
+              <form
+                onSubmit={handleSendMessage}
+                className="p-4 border-t bg-white"
+              >
                 <div className="flex gap-2">
                   <Button
                     type="button"
@@ -1159,10 +1318,16 @@ export default function ConversationalShop() {
                     onBlur={handleInputBlur}
                     placeholder="Order food (e.g., '2 plates of rice with chicken') or search for products..."
                     className="min-h-10 flex-1 resize-none border-brand-200 focus-visible:ring-brand-500"
+                    // ADDED: Escape key handling in onKeyDown
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault()
-                        handleSendMessage(e)
+                        
+                        e.preventDefault();
+                        handleSendMessage(e);
+                      }
+                      // Reset focus state on Escape key
+                      if (e.key === "Escape") {
+                        textareaRef.current?.blur();
                       }
                     }}
                     disabled={isProcessing || isImageUploading}
@@ -1173,7 +1338,11 @@ export default function ConversationalShop() {
                     disabled={isProcessing || isImageUploading || !input.trim()}
                     className="bg-brand-500 hover:bg-brand-600"
                   >
-                    {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    {isProcessing ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </form>
@@ -1205,22 +1374,30 @@ export default function ConversationalShop() {
       )}
 
       {/* Orders Modal */}
-      {showOrders && <OrdersModal 
-      isOpen={showOrders} onClose={() => setShowOrders(false)} />}
+      {showOrders && (
+        <OrdersModal isOpen={showOrders} onClose={() => setShowOrders(false)} />
+      )}
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteConfirmation} onOpenChange={setShowDeleteConfirmation}>
+      <Dialog
+        open={showDeleteConfirmation}
+        onOpenChange={setShowDeleteConfirmation}
+      >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Delete All Conversations</DialogTitle>
           </DialogHeader>
           <div className="py-4">
             <p className="text-muted-foreground">
-              Are you sure you want to delete all conversations? This action cannot be undone.
+              Are you sure you want to delete all conversations? This action
+              cannot be undone.
             </p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteConfirmation(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteConfirmation(false)}
+            >
               Cancel
             </Button>
             <Button variant="destructive" onClick={deleteAllConversations}>
@@ -1230,5 +1407,5 @@ export default function ConversationalShop() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
