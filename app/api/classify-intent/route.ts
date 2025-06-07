@@ -18,6 +18,9 @@ You MUST return one of the following intent labels:
 
 - "food_order": The user is ordering or modifying a food order (e.g., "I'd like a pepperoni pizza", "remove fries from my order").
 - "product_search": The user is searching for a non-food product (e.g., clothes, shoes, electronics, etc.).
+- "service_request": The user is requesting a service like cleaning or laundry.
+- "about_us": The user is asking about what the business does or what products/services are offered.
+- "general": The user is making small talk or asking general questions.
 - "support": The user is asking for help, support, or has questions about returns, delivery, or issues.
 - "general": The user is making small talk, chatting, or asking something general (e.g., "hello", "who are you?").
 - "unknown": You are not confident about the intent or the message is unclear.

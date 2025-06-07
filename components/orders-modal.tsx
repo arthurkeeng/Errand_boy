@@ -36,7 +36,6 @@ export default function OrdersModal({ isOpen, onClose }: OrdersModalProps) {
       }
       
       const data = await response.json()
-      console.log('orders include' , data)
 
       // Transform the MongoDB orders to match our frontend Order type
       const transformedOrders: Order[] = data.orders.map((order: any) => ({

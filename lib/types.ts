@@ -10,6 +10,11 @@ export interface Product {
   originalFoodItem?: FoodItem
   cartItemId?: string
 }
+export type Service = {
+  name: string;
+  type: string;
+  description: string;
+};
 
 export interface FoodItem {
   id: string
@@ -64,16 +69,26 @@ export interface Order {
 
 
 
-export type Message = {
-  id: string
-  role: "user" | "assistant"
-  content: string
-  isLoading?: boolean
-  messageType?: "food_order" | "product_search" | "general"
-  products?: Product[]
-  foodOrderData?: any
-}
+// export type Message = {
+//   id: string
+//   role: "user" | "assistant"
+//   content: string
+//   isLoading?: boolean
+//   messageType?: "food_order" | "product_search" | "general"
+//   products?: Product[]
+//   foodOrderData?: any
+// }
 
+export type Message = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  products?: Product[];
+  services?: Service[],
+  isLoading?: boolean;
+  messageType?: "food_order" | "product_search" | "general" | "about_us" | "service_request" |"follow_up" |"quote" | 'error';
+  foodOrderData?: any;
+};
 
 export type Conversation = {
   id: string

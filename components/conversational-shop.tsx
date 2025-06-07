@@ -30,7 +30,13 @@ import {
   generateModificationResponse,
 } from "@/lib/cart-utils";
 import { convertFoodOrderToProducts } from "@/lib/food-ordering";
-import type { Product, Order, Conversation } from "@/lib/types";
+import type {
+  Product,
+  Order,
+  Conversation,
+  Service,
+  Message,
+} from "@/lib/types";
 import ProductCard from "@/components/product-card";
 import ProductDetail from "@/components/product-detail";
 import Pagination from "@/components/pagination";
@@ -63,17 +69,11 @@ import {
 } from "@/components/ui/dialog";
 import { handleFoodOrder } from "@/handlers/food-handler";
 import { handleProductSearch } from "@/handlers/product-handler";
-import { useUser } from "@clerk/nextjs";
+import { SignedIn, SignOutButton, UserButton, useUser } from "@clerk/nextjs";
+import { handleServiceRequest } from "@/handlers/service-handler";
+import { handleAboutUs } from "@/handlers/query-handler";
+import { handleFollowUpResponse } from "@/lib/sevices/handle-follow-up";
 
-type Message = {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  products?: Product[];
-  isLoading?: boolean;
-  messageType?: "food_order" | "product_search" | "general";
-  foodOrderData?: any;
-};
 type User = {
   user_id: string;
   email: string;
@@ -114,6 +114,12 @@ export default function ConversationalShop() {
   const [showOrders, setShowOrders] = useState(false);
   const { toast } = useToast();
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [serviceConversationStep, setServiceConversationStep] = useState<
+    "initial" | "awaitingDetails"
+  >("initial");
+  const [currentServiceType, setCurrentServiceType] = useState<
+    string | null
+  >(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [currentUser, setCurrentUser] = useState<User>();
 
@@ -150,17 +156,6 @@ export default function ConversationalShop() {
       setActiveConversation(mostRecent.id);
       setMessages(mostRecent.messages);
       setCart(mostRecent.cart || []);
-    }
-
-    // Load orders
-    const savedOrders = getOrders();
-    if (savedOrders.length === 0) {
-      // Generate mock orders for demo purposes
-      const mockOrders = generateMockOrders(8);
-      localStorage.setItem("errandBoyOrders", JSON.stringify(mockOrders));
-      setOrders(mockOrders);
-    } else {
-      setOrders(savedOrders);
     }
   }, []);
 
@@ -397,6 +392,39 @@ export default function ConversationalShop() {
           assistantMessageId: assistantMessage.id,
           getCurrentConversationHistory,
           generateResponse,
+        });
+        setIsProcessing(false);
+        break;
+      case "service_request":
+        if (serviceConversationStep === "initial") {
+        const {services } = await handleServiceRequest({
+          input,
+          assistantMessageId: assistantMessage.id,
+          setMessages,
+          getCurrentConversationHistory,
+          generateResponse,
+        });
+        const matchedService = services?.[0] ;
+        setCurrentServiceType(matchedService?.type || null);
+        setServiceConversationStep("awaitingDetails");
+      }
+      else if (serviceConversationStep === "awaitingDetails") {
+        // Handle user input as follow-up details and generate quote
+        await handleFollowUpResponse({
+          input,
+          setMessages,
+          getCurrentConversationHistory,
+        });
+        setServiceConversationStep("initial"); // reset for next interaction
+        setCurrentServiceType(null);
+      }
+        setIsProcessing(false);
+        break;
+      case "about_us":
+        await handleAboutUs({
+          input,
+          setMessages,
+          assistantMessageId: assistantMessage.id,
         });
         setIsProcessing(false);
         break;
@@ -860,14 +888,6 @@ export default function ConversationalShop() {
           >
             <Package className="h-4 w-4 mr-2" />
             Orders
-            {activeOrdersCount > 0 && (
-              <Badge
-                variant="secondary"
-                className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
-              >
-                {activeOrdersCount}
-              </Badge>
-            )}
           </Button>
 
           <Button
@@ -925,8 +945,11 @@ export default function ConversationalShop() {
               >
                 {/* This is where the Clerk user avatar would be rendered */}
                 {/* For now, using a placeholder */}
+
                 <div className="bg-accent2-500 h-full w-full flex items-center justify-center">
-                  <User className="h-4 w-4 text-white" />
+                  <SignedIn>
+                    <UserButton />
+                  </SignedIn>
                 </div>
               </Button>
             </DropdownMenuTrigger>
@@ -939,7 +962,9 @@ export default function ConversationalShop() {
                 Order History
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Sign out</DropdownMenuItem>
+              <DropdownMenuItem>
+                <SignOutButton />
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -1032,8 +1057,9 @@ export default function ConversationalShop() {
                 size="sm"
                 className="text-white hover:bg-white/20 hover:text-white whitespace-nowrap flex-shrink-0"
               >
-                <User className="h-4 w-4 mr-2" />
-                Profile
+                <SignedIn>
+                  <UserButton />
+                </SignedIn>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -1194,7 +1220,7 @@ export default function ConversationalShop() {
                         {message.isLoading ? (
                           <div className="flex items-center">
                             <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            <span>Thinking...</span>
+                            <span>Just a moment...</span>
                           </div>
                         ) : (
                           <div>
@@ -1321,7 +1347,6 @@ export default function ConversationalShop() {
                     // ADDED: Escape key handling in onKeyDown
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
-                        
                         e.preventDefault();
                         handleSendMessage(e);
                       }

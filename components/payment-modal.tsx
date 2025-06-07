@@ -205,7 +205,7 @@ export default function PaymentModal({
             >
                <PaystackButton
                className="rounded-md px-4 py-2
-               text-white text-center mx-auto
+               text-white text-center mx-auto w-auto 
               "
               text={`Pay ₦${Math.ceil(total)}`}
               amount={Math.ceil(total * 100)} // Paystack expects amount in kobo
